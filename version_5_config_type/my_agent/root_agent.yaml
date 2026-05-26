@@ -1,8 +1,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/google/adk-python/refs/heads/main/src/google/adk/agents/config_schemas/AgentConfig.json
+# 步骤 1：声明根 Agent 类型。这里不用 Python 代码，直接用 YAML 创建 LlmAgent。
 agent_class: LlmAgent
+# 步骤 2：指定根 Agent 使用的 Gemini 模型。
 model: gemini-2.5-flash
+# 步骤 3：定义 Agent 名称，ADK 会用它作为配置型 Agent 的入口标识。
 name: root_agent
+# 步骤 4：description 用于说明这个根 Agent 的总体用途。
 description: 面向 Python 和物理问题的中文学习助手。
+# 步骤 5：instruction 负责告诉根 Agent 如何判断用户问题并委派给子 Agent。
 instruction: |
   你是一个学习助手，负责帮助学生解答 Python 和物理问题。
 
@@ -12,6 +17,9 @@ instruction: |
   1. 如果用户询问 Python、编程、代码、调试或软件开发概念，委派给 python_tutor_agent。
   2. 如果用户询问物理概念、定律、公式或物理题，委派给 physics_tutor_agent。
   3. 回答要清晰、分步骤，并鼓励用户理解原理。
+# 步骤 6：声明可委派的子 Agent 配置文件。
 sub_agents:
+  # Python 相关问题会委派给 Python 导师。
   - config_path: python_tutor_agent.yaml
+  # 物理相关问题会委派给物理导师。
   - config_path: physics_tutor_agent.yaml

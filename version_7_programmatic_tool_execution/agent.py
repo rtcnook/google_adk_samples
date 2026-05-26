@@ -66,9 +66,11 @@ class AgentWrapper:
         - Defining the 'run_python_code' tool.
         - Initializing the ADK agent with strict instructions on using the Python tool.
         """
+        # 步骤 1：先连接配置文件中的 MCP Server，并把可用工具集保存下来。
         # Load toolsets (connections are established here)
         self._toolsets = await self._load_toolsets()
 
+        # 步骤 2：在 Agent 内部定义一个 Python 执行工具，后续会包装成 ADK FunctionTool。
         # --- Define the Python Execution Function Locally ---
         
         async def run_python_code(code: str) -> str:
@@ -89,9 +91,11 @@ class AgentWrapper:
             """
             print(f"[bold blue]🐍 Executing Python Code:[/bold blue]\n{code}")
             
+            # 步骤 3：为即将执行的 Python 代码准备独立作用域。
             # 1. Prepare the execution scope
             scope: Dict[str, Any] = {}
 
+            # 步骤 4：每次执行前重新从 MCP toolset 获取工具，确保工具列表是最新的。
             # 2. Dynamic Tool Retrieval
             current_tools: List[BaseTool] = []
             
@@ -103,6 +107,7 @@ class AgentWrapper:
                 except Exception as e:
                     print(f"[yellow]⚠️ Warning: Could not fetch tools from a toolset during python exec:[/yellow] {e}")
 
+            # 步骤 5：把每个 MCP 工具包装成 Python async 函数，供 LLM 生成的代码 await 调用。
             # 3. Helper to create a native python async function that calls the MCP tool
             def create_wrapper(tool_instance: BaseTool) -> Callable[..., Any]:
                 async def wrapped_mcp_call(**kwargs: Any) -> Any:
@@ -112,17 +117,20 @@ class AgentWrapper:
                     return await tool_instance.run_async(args=kwargs, tool_context=None)
                 return wrapped_mcp_call
 
+            # 步骤 6：把包装后的工具注入到执行作用域中，例如 add_numbers、read_file。
             # 4. Inject tools into scope
             for tool in current_tools:
                 # Sanitize tool name for python variable (replace - with _)
                 safe_name: str = tool.name.replace("-", "_")
                 scope[safe_name] = create_wrapper(tool)
 
+            # 步骤 7：把 LLM 生成的代码包进 async 函数，这样代码内部可以使用 await。
             # 5. Wrap the user's code in an async function to allow 'await'
             indented_code: str = textwrap.indent(code, "    ")
             wrapper_code: str = f"async def _main():\n{indented_code}"
 
             try:
+                # 步骤 8：先执行函数定义，再调用 _main 得到最终结果。
                 # Execute the definition of _main in the scope
                 exec(wrapper_code, scope)
                 
@@ -147,9 +155,11 @@ class AgentWrapper:
                 print(f"[red]❌ Python Execution Failed:[/red]\n{err}")
                 return f"Python Execution Error:\n{err}"
 
+        # 步骤 9：把 run_python_code 包装成 ADK 工具，交给 LlmAgent 使用。
         # --- Create the Tool ---
         python_tool: FunctionTool = FunctionTool(run_python_code)
 
+        # 步骤 10：最终 Agent 同时拥有 MCP toolset 和 Python 执行工具。
         # Construct the ADK LLM Agent
         combined_tools: List[Union[MCPToolset, FunctionTool]] = self._toolsets + [python_tool] # type: ignore
 
@@ -188,6 +198,7 @@ class AgentWrapper:
             try:
                 conn: Union[StreamableHTTPServerParams, StdioConnectionParams]
 
+                # 步骤 A：根据配置判断 MCP Server 是 HTTP 方式还是 stdio 方式。
                 # Determine connection method
                 if server_config.get("type") == "http":
                     conn = StreamableHTTPServerParams(url=server_config["url"])
@@ -203,12 +214,14 @@ class AgentWrapper:
                 else:
                     raise ValueError(f"[red]❌ Unknown server type: '{server_config.get('type')}'[/red]")
 
+                # 步骤 B：创建 MCPToolset。这里还没有执行业务工具，只是在建立工具连接。
                 # Connect
                 toolset = MCPToolset(
                     connection_params=conn,
                     tool_filter=self.tool_filter
                 )
 
+                # 步骤 C：拉取工具列表，既用于验证连接，也用于后续动态注入。
                 # Fetch tools (activates the session and validates connection)
                 tools: List[Any] = await toolset.get_tools()
                 

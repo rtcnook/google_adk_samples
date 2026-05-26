@@ -37,16 +37,20 @@ def list_gmail_messages(
     Returns:
         A list of dictionaries containing email metadata (id, subject, from, date, snippet).
     """
+    # 步骤 1：ADK 会在授权完成后自动注入 credential；没有授权就返回提示。
     if not credential or not credential.oauth2:
         return [{"error": "Authorization Required. Please click the Authorize button to proceed."}]
-        
+
+    # 步骤 2：把 ADK OAuth credential 转换成 Google API Client 可用的 Credentials。
     creds = Credentials(
         token=credential.oauth2.access_token,
         refresh_token=credential.oauth2.refresh_token,
     )
-    
+
+    # 步骤 3：创建 Gmail API service，后续所有 Gmail 请求都通过它发出。
     service = build('gmail', 'v1', credentials=creds)
-    
+
+    # 步骤 4：根据天数、发件人、关键词拼接 Gmail 搜索 query。
     # Build the query string
     query_parts = []
     if days:
@@ -59,12 +63,14 @@ def list_gmail_messages(
         
     query = " ".join(query_parts)
 
+    # 步骤 5：先查询匹配邮件的 ID 列表，再逐封读取元数据。
     # Fetch list of message IDs
     results = service.users().messages().list(userId='me', q=query, maxResults=max_results).execute()
     messages = results.get('messages', [])
     
     email_list = []
     for msg in messages:
+        # 步骤 6：这里只读取 metadata 和 snippet，避免一次性暴露完整正文。
         # Get details for each message
         m = service.users().messages().get(userId='me', id=msg['id'], format='metadata', 
                                           metadataHeaders=['Subject', 'From', 'Date']).execute()
@@ -96,16 +102,19 @@ def get_message_content(message_id: str, credential: Optional[AuthCredential] = 
     Returns:
         The text content of the email.
     """
+    # 步骤 1：读取正文同样需要 OAuth 授权，没有授权就让用户先授权。
     if not credential or not credential.oauth2:
         return "Authorization Required. Please click the Authorize button to proceed."
-        
+
+    # 步骤 2：构造 Gmail API client，并按 message_id 拉取完整邮件内容。
     creds = Credentials(
         token=credential.oauth2.access_token,
         refresh_token=credential.oauth2.refresh_token,
     )
     service = build('gmail', 'v1', credentials=creds)
     message = service.users().messages().get(userId='me', id=message_id, format='full').execute()
-    
+
+    # 步骤 3：优先提取 text/plain 正文；如果邮件结构简单或没有正文，则回退到 snippet。
     parts = message.get('payload', {}).get('parts', [])
     body = ""
     

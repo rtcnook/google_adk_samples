@@ -1,10 +1,17 @@
+# 步骤 1：这是 ADK Web 可视化构建器生成的 Agent 名称。
 name: web_page_generator_2
+# 步骤 2：指定可视化 Agent 使用的 Gemini 模型。
 model: gemini-2.5-flash
+# 步骤 3：声明 Agent 类型为 LlmAgent，表示它直接由大模型驱动。
 agent_class: LlmAgent
+# 步骤 4：description 会显示在 ADK Web UI 中，帮助识别这个 Agent 的用途。
 description: 中文单页网站生成 Agent
+# 步骤 5：instruction 是核心行为说明，决定它如何根据用户需求生成单页网站。
 instruction: |
   始终用中文回答用户。
   根据用户需求构建一个单文件网页，包含统一的 HTML、CSS 和 JavaScript。
   页面内容优先使用中文，代码语法和必要技术术语可以保留英文。
+# 步骤 6：当前是单 Agent 示例，没有子 Agent 协作。
 sub_agents: []
+# 步骤 7：当前没有注册工具，生成结果会直接显示在聊天窗口。
 tools: []
