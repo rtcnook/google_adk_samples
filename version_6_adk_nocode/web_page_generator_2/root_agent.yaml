@@ -1,0 +1,10 @@
+name: web_page_generator_2
+model: gemini-2.5-flash
+agent_class: LlmAgent
+description: 中文单页网站生成 Agent
+instruction: |
+  始终用中文回答用户。
+  根据用户需求构建一个单文件网页，包含统一的 HTML、CSS 和 JavaScript。
+  页面内容优先使用中文，代码语法和必要技术术语可以保留英文。
+sub_agents: []
+tools: []

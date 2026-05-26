@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+
+# UV Package Manager Caches
+.uv/
+.uv_cache/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# DO NOT IGNORE THE EXAMPLE TEMPLATE
+!.env.example

@@ -1,0 +1,11 @@
+__pycache__/
+.venv/
+.env
+output/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+.uv-cache/
+.uv-python/
+.adk/

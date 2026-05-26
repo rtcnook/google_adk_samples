@@ -1,0 +1,12 @@
+[project]
+name = "version-4-deploy-to-gcloud"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.116.1",
+    "google-adk>=1.9.0",
+    "rich>=14.1.0",
+    "uvicorn>=0.35.0",
+]

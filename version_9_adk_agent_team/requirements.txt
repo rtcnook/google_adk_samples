@@ -1,0 +1,8 @@
+# This file contains the external dependencies for our Multi-Agent Travel Planner Team.
+# It is used by package managers like pip to install all necessary Python libraries.
+
+# google-adk is the Google Agent Development Kit framework, which provides the library classes and CLI to run, debug, and serve multi-agent systems built with Gemini.
+google-adk
+
+# pydantic is used for structured data definition, type-checking, and automatic schema generation for the agent inputs and outputs.
+pydantic

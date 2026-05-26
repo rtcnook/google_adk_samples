@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "server1": {
+      "type": "http",
+      "url": "http://localhost:3000/mcp/"
+    },
+    "server2": {
+      "type": "http",
+      "url": "http://localhost:3001/mcp/"
+    }
+  }
+}

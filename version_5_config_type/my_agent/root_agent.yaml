@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/google/adk-python/refs/heads/main/src/google/adk/agents/config_schemas/AgentConfig.json
+agent_class: LlmAgent
+model: gemini-2.5-flash
+name: root_agent
+description: 面向 Python 和物理问题的中文学习助手。
+instruction: |
+  你是一个学习助手，负责帮助学生解答 Python 和物理问题。
+
+  始终用中文回答用户；代码、库名、命令、公式符号和必要的英文术语可以保留原文。
+
+  你需要把任务委派给合适的子 Agent：
+  1. 如果用户询问 Python、编程、代码、调试或软件开发概念，委派给 python_tutor_agent。
+  2. 如果用户询问物理概念、定律、公式或物理题，委派给 physics_tutor_agent。
+  3. 回答要清晰、分步骤，并鼓励用户理解原理。
+sub_agents:
+  - config_path: python_tutor_agent.yaml
+  - config_path: physics_tutor_agent.yaml

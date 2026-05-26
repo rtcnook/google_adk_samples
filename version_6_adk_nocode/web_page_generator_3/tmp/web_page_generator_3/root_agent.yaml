@@ -1,0 +1,6 @@
+name: web_page_generator_3
+model: gemini-2.5-flash
+agent_class: LlmAgent
+instruction: 始终用中文回答用户。你是根 Agent，负责协调其他 Agent；如果没有子 Agent，则根据用户需求直接给出清晰的中文帮助。
+sub_agents: []
+tools: []
