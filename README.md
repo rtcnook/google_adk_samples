@@ -82,42 +82,40 @@ GOOGLE_GENAI_USE_VERTEXAI=FALSE
 
 You can get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
 
-### 3. Set Up the Python Environment
+### 3. Set Up the Python Environment (Unified Workspace)
 
-Each project should be run in its own virtual environment to manage dependencies.
+This repository is configured as a **unified `uv` workspace**. You do not need to create individual virtual environments for each project. All dependencies are managed globally at the root.
 
 ```bash
-# Navigate to the project you want to run
-cd path/to/specific_agent_project
+# Navigate to the root directory of the repository
+cd adk_samples
 
-# Create and activate a virtual environment using uv
-uv venv
-source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate.bat
-
-# Install the project's dependencies
-uv sync --all-groups
+# Sync dependencies for all projects at once
+uv sync
 ```
+
+This will create a single `.venv` at the root and install all required libraries across all sub-projects.
 
 ---
 
 ## 🤖 Running an Agent
 
-After completing the setup for a specific project, you can run its agent(s) using the ADK web interface.
+After syncing the workspace, you can navigate into any sub-project and use `uv run` to start the agent. It will automatically use the unified root environment.
 
 1.  Make sure you are in the project's root directory in your terminal.
-2.  Launch the ADK web server:
+2.  Launch the ADK web server (or run the python script) using `uv run`:
 
 ```bash
 # For projects with a flat agent structure (like v1)
 cd version_1_website_builder_simple/
-adk web ./agents
+uv run adk web ./agents
 
-# For projects with a main.py entrypoint (like v2)
-cd version_2_sequential_website_agent/
-adk web ./agents
+# For projects with a main.py entrypoint (like v10)
+cd version_10_agent_platform_office_team/
+uv run main.py
 ```
 
-3.  Open your browser and go to `http://localhost:8000`.
+3.  If using `adk web`, open your browser and go to `http://localhost:8000`.
 4.  Select the desired agent from the dropdown menu and start interacting with it!
 
 ---
@@ -126,10 +124,10 @@ adk web ./agents
 
 | S.No. | Method & Command | Description | When to Use |
 |------:|------------------|-------------|-------------|
-| 1 | **ADK Web**  <br>`adk web ./agents` | - Launches a browser-based UI | - Ideal for debugging or quick demos |
-| 2 | **ADK API Server** <br>`adk api_server ./agents` | - Starts an HTTP API server | - Useful for REST API-based automation. |
-| 3 | **Programmatic Python Script** <br>`uv run python3 -m agent_runner` | - Fully code-driven interaction using Python and the ADK SDK | - Ideal for building your own CLI tools or backend pipelines |
-| 4 | **ADK CLI Run** <br>`adk run agents/root_website_builder` | - Command-line way to run a specific agent directly | - Great for quick runs or testing |
+| 1 | **ADK Web**  <br>`uv run adk web ./agents` | - Launches a browser-based UI | - Ideal for debugging or quick demos |
+| 2 | **ADK API Server** <br>`uv run adk api_server ./agents` | - Starts an HTTP API server | - Useful for REST API-based automation. |
+| 3 | **Programmatic Python Script** <br>`uv run main.py` | - Fully code-driven interaction using Python and the ADK SDK | - Ideal for building your own CLI tools or backend pipelines |
+| 4 | **ADK CLI Run** <br>`uv run adk run agents/root_website_builder` | - Command-line way to run a specific agent directly | - Great for quick runs or testing |
 
 ---
 

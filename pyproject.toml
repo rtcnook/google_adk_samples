@@ -1,0 +1,17 @@
+[project]
+name = "google_adk_samples"
+version = "0.1.0"
+description = "Google ADK Agent Samples Workspace"
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk",
+    "google-genai",
+    "google-cloud-aiplatform",
+    "python-dotenv",
+    "python-docx>=1.1.0",
+    "python-pptx>=1.0.0",
+    "openpyxl>=3.1.0"
+]
+
+[workspace]
+members = ["version_*"]
