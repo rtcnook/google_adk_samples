@@ -87,21 +87,23 @@ uv sync
 # 进入您想要运行的项目
 cd version_10_agent_platform_office_team/
 
-# 方式一：使用 ADK Web 界面运行
-uv run adk web ./agents
+# 方式一：使用 ADK Web 界面运行（在项目根目录下执行）
+uv run adk web
 
-# 方式二：使用项目自带的代码终端运行 (如果包含 main.py)
-uv run main.py
+# 方式二：使用 CLI 交互模式
+uv run python main.py
+
+# 方式三：使用 CLI Workflow 模式（单轮全流程）
+uv run python main.py --workflow
 ```
 
 ### **四种运行 ADK Agent 的方式**
 
 | 序号 | 方式与命令 | 描述 | 适用场景 |
 |------|-----------|------|----------|
-| 1 | **ADK Web** <br>`uv run adk web ./agents` | 启动浏览器 UI | 调试或快速演示 |
-| 2 | **ADK API Server** <br>`uv run adk api_server ./agents` | 启动 HTTP API 服务 | 基于 REST API 的系统集成 |
-| 3 | **程序化 Python 脚本** <br>`uv run main.py` | 代码驱动的交互 | 构建 CLI 工具或后端流水线 |
-| 4 | **ADK CLI Run** <br>`uv run adk run agents/root_agent` | 命令行直接运行指定的 Agent | 快速测试 |
+| 1 | **ADK Web** <br>`uv run adk web` | 启动浏览器 UI，自动加载 `agent.py` 中的 Workflow | 调试或快速演示 |
+| 2 | **CLI 交互** <br>`uv run python main.py` | CEO Agent 多轮交互，自动推进全流程 | 终端操作 |
+| 3 | **CLI Workflow** <br>`uv run python main.py --workflow` | 单轮全流程，发送一次请求完成所有步骤 | 快速生成 |
 
 ---
 

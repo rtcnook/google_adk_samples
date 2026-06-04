@@ -16,4 +16,6 @@ root_agent = Agent(
     instruction=instruction_text,
     tools=[save_document, save_docx, save_pptx, save_excel],
     description="负责将最终版的文档保存为各种本地文件格式(md, txt, docx, pptx, xlsx)的导出专员。",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
 )

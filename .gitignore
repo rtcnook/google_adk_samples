@@ -2,6 +2,7 @@ __pycache__/
 .venv/
 .env
 output/
+outputs/
 *.py[cod]
 .DS_Store
 .idea/

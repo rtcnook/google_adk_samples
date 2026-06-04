@@ -26,4 +26,5 @@ root_agent = Agent(
     sub_agents=[research_agent, writer_agent, qa_reviewer, export_manager],
     instruction=instruction_text,
     description="公司的CEO兼项目经理，负责接收用户任务并协调下属员工（收集资料、写文章、审查、导出）。",
+    rerun_on_resume=True,
 )

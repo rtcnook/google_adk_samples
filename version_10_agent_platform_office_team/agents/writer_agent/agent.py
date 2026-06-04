@@ -14,4 +14,7 @@ root_agent = Agent(
     model="gemini-2.5-flash",
     instruction=instruction_text,
     description="负责根据收集的资料撰写正式文档、周报、邮件的文字工作者。",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
+    output_key="draft_content",
 )

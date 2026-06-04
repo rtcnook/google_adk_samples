@@ -14,4 +14,7 @@ root_agent = Agent(
     model="gemini-2.5-flash",
     instruction=instruction_text,
     description="负责审查文档质量，进行逻辑检查和语言润色的审核员。",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
+    output_key="final_content",
 )

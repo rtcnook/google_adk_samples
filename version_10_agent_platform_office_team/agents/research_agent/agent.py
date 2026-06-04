@@ -14,4 +14,7 @@ root_agent = Agent(
     model="gemini-2.5-flash",
     instruction=instruction_text,
     description="负责资料收集、数据分析以及任务大纲整理的员工。",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
+    output_key="research_result",
 )

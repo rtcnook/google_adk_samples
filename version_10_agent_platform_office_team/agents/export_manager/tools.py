@@ -59,6 +59,7 @@ def save_pptx(filename: str, slides_json: str) -> str:
     """
     try:
         from pptx import Presentation
+        from pptx.util import Pt
     except ImportError:
         return "错误: 缺少 python-pptx 库，请安装。"
         
@@ -74,15 +75,45 @@ def save_pptx(filename: str, slides_json: str) -> str:
         return "错误: slides_json 无法解析为有效的 JSON。"
         
     prs = Presentation()
+    # 设置默认幻灯片尺寸为 16:9
+    prs.slide_width = Pt(960)
+    prs.slide_height = Pt(540)
+
     for slide_data in slides_data:
         title_slide_layout = prs.slide_layouts[1] # 1 is Title and Content layout
         slide = prs.slides.add_slide(title_slide_layout)
         title = slide.shapes.title
         content_box = slide.placeholders[1]
-        
+
         title.text = slide_data.get("title", "")
-        content_box.text = slide_data.get("content", "")
-        
+        content_text = slide_data.get("content", "")
+
+        # 设置标题字体大小（根据标题长度自动调整）
+        title_length = len(title.text)
+        if title_length <= 10:
+            title_size = Pt(28)
+        elif title_length <= 20:
+            title_size = Pt(24)
+        elif title_length <= 30:
+            title_size = Pt(20)
+        else:
+            title_size = Pt(18)
+
+        for paragraph in title.text_frame.paragraphs:
+            paragraph.font.size = title_size
+
+        # 设置正文内容框架
+        tf = content_box.text_frame
+        tf.clear()  # 清除默认占位符段落
+
+        # 按换行符拆分内容，逐段添加并设置字体大小
+        for line in content_text.split("\n"):
+            if line.strip():
+                p = tf.add_paragraph()
+                p.text = line.strip()
+                p.font.size = Pt(14)
+                p.space_after = Pt(6)
+
     prs.save(file_path)
     return f"PPT 文档已成功保存到: {file_path}"
 

@@ -112,7 +112,12 @@ uv run adk web ./agents
 
 # For projects with a main.py entrypoint (like v10)
 cd version_10_agent_platform_office_team/
-uv run main.py
+
+# CLI mode
+uv run python main.py
+
+# ADK Web (run from project root, not ./agents)
+uv run adk web
 ```
 
 3.  If using `adk web`, open your browser and go to `http://localhost:8000`.
