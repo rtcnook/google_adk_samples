@@ -20,6 +20,54 @@ uv run adk web
 
 > 统一使用 `uv run` 前缀，确保始终在 venv 环境中运行，避免缺少依赖库。
 
+## 三种运行方式
+
+| 方式 | 命令 | 用途 |
+|------|------|------|
+| **CLI 交互** | `uv run python main.py` | 终端对话，CEO Agent 多轮自动推进 |
+| **ADK Web** | `uv run adk web` | 浏览器 UI，快速调试和演示 |
+| **ADK API Server** | `uv run adk api_server` | 对外提供 REST API，供外部系统集成 |
+
+### ADK Web 说明
+
+ADK Web 是 Google ADK 内置的调试/演示用 Web UI。在浏览器中直接与 Agent 对话，实时查看返回内容和工具调用，无需写代码。
+
+启动后访问 `http://localhost:8000`，下拉选择 `office_workflow` 即可使用。
+
+### ADK API Server 对外接口
+
+启动后默认监听 `http://localhost:8000`，提供以下 REST 接口：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET` | `/list-apps` | 列出所有可用 Agent |
+| `POST` | `/apps/{app}/users/{user}/sessions` | 创建会话 |
+| `POST` | `/run` | 运行 Agent（同步） |
+| `POST` | `/run_sse` | 运行 Agent（SSE 流式） |
+| `GET` | `/apps/{app}/users/{user}/sessions/{sid}` | 查询会话状态 |
+
+调用示例（生成 PPT）：
+
+```bash
+# 创建会话
+curl -X POST http://localhost:8000/apps/office_workflow/users/user1/sessions
+
+# 发送任务
+curl -X POST http://localhost:8000/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "app_name": "office_workflow",
+    "user_id": "user1",
+    "session_id": "<返回的 session_id>",
+    "new_message": {
+      "parts": [{"text": "做一个关于AI发展趋势的5页PPT"}],
+      "role": "user"
+    }
+  }'
+```
+
+可集成到网页、企业微信、钉钉机器人等任何外部系统中。
+
 ## 生成文件格式
 
 Agent 会根据你的需求自动选择合适的输出格式：
