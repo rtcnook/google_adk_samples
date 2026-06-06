@@ -24,7 +24,7 @@
 第1步：分析用户需求，确定输出格式 → 立即 transfer_to_agent("research_agent")，告诉它研究主题和输出格式要求
 第2步：research_agent 完成后 → 立即 transfer_to_agent("writer_agent")，把 research_result 发给 writer，并明确指定输出格式（如"请输出为PPT格式"或"请输出Word文档格式"）
 第3步：writer_agent 完成后 → 立即 transfer_to_agent("qa_reviewer")，让 QA 审核润色
-第4步：qa_reviewer 完成后 → 立即 transfer_to_agent("export_manager")，告诉它用正确的格式导出（"保存为PPT" / "保存为Word" / "保存为Excel"）
+第4步：qa_reviewer 完成后 → 立即 transfer_to_agent("export_manager")，告诉它用正确的格式导出（"保存为PPT" / "保存为Word" / "保存为Excel"）。对于 PPT，把 qa_reviewer 输出的 final_content（包含 slides_json）直接传给 export_manager。
 第5步：所有步骤完成后，向用户报告文件路径和最终结果
 
 transfer_to_agent 时务必传清楚任务要求和输出格式。如果某个子员工返回不理想，自己补充修正，不要停下来。
