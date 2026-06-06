@@ -8,9 +8,9 @@ Maestroffice Lite — 多 Agent 办公助手
 """
 import os
 import json
+import sys
 import asyncio
 import pathlib
-import sys
 from dotenv import load_dotenv
 
 env_path = pathlib.Path(__file__).parent / ".env"
@@ -24,30 +24,35 @@ from google.genai import types
 
 
 async def _print_events(runner, user_id, session_id, msg):
-    """打印 agent 输出事件，并捕获最终内容"""
+    """打印 agent 输出事件，并捕获最终内容。异常不崩溃，只记录。"""
     last_author = None
     all_content = []
-    async for event in runner.run_async(
-        user_id=user_id,
-        session_id=session_id,
-        new_message=msg,
-    ):
-        if event.content and event.content.parts:
-            for part in event.content.parts:
-                if part.text and part.text.strip():
-                    text = part.text.strip()
-                    if event.author != last_author:
-                        print(f"\n[{event.author}]:")
-                        last_author = event.author
-                    print(f"  {text[:600]}")
-                    all_content.append(text)
-        if event.error_code:
-            print(f"[Error: {event.error_code}] {event.error_message}")
+    try:
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session_id,
+            new_message=msg,
+        ):
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text and part.text.strip():
+                        text = part.text.strip()
+                        if event.author != last_author:
+                            print(f"\n[{event.author}]:")
+                            last_author = event.author
+                        print(f"  {text[:600]}")
+                        all_content.append(text)
+            if event.error_code:
+                print(f"[Error: {event.error_code}] {event.error_message}", file=sys.stderr)
+                # Don't let errors crash the program — continue processing
+    except Exception as e:
+        print(f"[FatalAgentError] {type(e).__name__}: {e}", file=sys.stderr)
+        # Return whatever content we captured, even on error
 
     return "\n".join(all_content)
 
 
-def _try_build_ppt_from_content(content: str, filename: str = "Hermes_Agent_介绍.pptx") -> bool:
+def _try_build_ppt_from_content(content: str, filename: str = "output.pptx") -> bool:
     """If the content contains a slides JSON, auto-build the PPT."""
     # Try to extract JSON from the content
     json_str = content.strip()
@@ -161,16 +166,14 @@ async def chat_ceo():
         output_dir = pathlib.Path(__file__).parent / "outputs"
         existing_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
 
-        # Auto-advance steps
+        # Auto-advance steps (only break when NEW file created, not old files)
         for step in range(5):
             await asyncio.sleep(1)
 
-            recent = sorted(
-                list(output_dir.glob("*.pptx")) + list(output_dir.glob("*.docx")) +
-                list(output_dir.glob("*.xlsx")) + list(output_dir.glob("*.md")),
-                key=lambda f: f.stat().st_mtime, reverse=True,
-            )
-            if recent:
+            # Check for newly created output files
+            current_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
+            newly_created = current_files - existing_files
+            if any(ext in f for f in newly_created for ext in ['.pptx', '.docx', '.xlsx', '.md']):
                 break
 
             prompts = [
@@ -189,9 +192,12 @@ async def chat_ceo():
         current_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
         new_files = current_files - existing_files
 
-        # Fallback: if export_manager didn't create any file, try to auto-build PPT from initial LLM content
+        # Fallback: if export_manager didn't create any file, try to auto-build PPT from LLM content
         if not new_files:
-            _try_build_ppt_from_content(initial_content)
+            try:
+                _try_build_ppt_from_content(initial_content)
+            except Exception as e:
+                print(f"[Fallback] PPT auto-build failed: {e}", file=sys.stderr)
 
         # Display all output files
         for pattern in ["*.pptx", "*.docx", "*.xlsx", "*.md"]:
