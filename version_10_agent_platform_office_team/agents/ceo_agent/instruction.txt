@@ -20,6 +20,11 @@
 - 普通文本/Markdown → 输出 .md / .txt
 在给 writer_agent 和 export_manager 分派任务时，务必明确告知所需格式。
 
+【多格式请求处理 — 重要】
+如果用户要求多种格式（如 "PPT、Word、Excel 和 MD"），你只需要完成其中一种格式即可。
+系统会自动为每种格式分别运行流水线，你不需要在一次对话中生成所有格式。
+优先处理顺序：PPT > Word > Excel > MD
+
 【强制执行的工作流（一步不落）】
 第1步：分析用户需求，确定输出格式 → 立即 transfer_to_agent("research_agent")，告诉它研究主题和输出格式要求
 第2步：research_agent 完成后 → 立即 transfer_to_agent("writer_agent")，把 research_result 发给 writer，并明确指定输出格式（如"请输出为PPT格式"或"请输出Word文档格式"）

@@ -3,7 +3,7 @@ Export Manager Agent
 """
 import pathlib
 from google.adk.agents import Agent
-from .tools import save_document, save_docx, save_pptx, save_excel
+from .tools import save_document, save_docx, save_pptx, save_excel, write_temp_json
 
 current_dir = pathlib.Path(__file__).parent.resolve()
 instruction_path = current_dir / "instruction.txt"
@@ -14,7 +14,7 @@ root_agent = Agent(
     name="export_manager",
     model="gemini-2.5-flash",
     instruction=instruction_text,
-    tools=[save_document, save_docx, save_pptx, save_excel],
+    tools=[save_document, save_docx, save_pptx, save_excel, write_temp_json],
     description="负责将最终版的文档保存为各种本地文件格式(md, txt, docx, pptx, xlsx)的导出专员。",
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,

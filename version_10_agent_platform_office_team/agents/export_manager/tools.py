@@ -393,14 +393,47 @@ def create_pptx(filename: str, theme: str = "dark", slides_json: str = "[]") -> 
 
 # ── Keep backward-compatible simple tools ──
 
-def save_pptx(filename: str, slides_json: str) -> str:
+def write_temp_json(content: str, tag: str = "ppt") -> str:
+    """将大段 JSON 内容写入临时文件，供后续工具读取。
+    用于解决 LLM 无法将超长 JSON 作为函数参数传递的问题。
+
+    Args:
+        content (str): JSON 字符串内容（PPT slides JSON、Excel 数据等）。
+        tag (str): 标签，用于区分不同格式的临时文件，如 'ppt'、'excel'。默认 'ppt'。
+
+    Returns:
+        临时文件的完整路径，后续可传给 save_pptx 的 json_file 参数。
+    """
+    outputs_dir = get_outputs_dir()
+    temp_dir = outputs_dir / ".temp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    import time as _time
+    ts = int(_time.time())
+    file_path = temp_dir / f"{tag}_{ts}.json"
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return str(file_path)
+
+
+def save_pptx(filename: str, slides_json: str = "", json_file: str = "") -> str:
     """保存内容为 PowerPoint (.pptx) 文档，自动配图和精美排版。
     Args:
         filename (str): 文件名称，例如 '产品介绍.pptx'。
-        slides_json (str): 幻灯片内容的 JSON 字符串。支持两种格式：
+        slides_json (str): 幻灯片内容的 JSON 字符串（短内容时使用）。支持两种格式：
             - 数组格式: [{"layout":"cover","title":"标题"...}, ...]
             - 对象格式: {"theme":"dark","slides":[{"layout":"cover",...}, ...]}
+        json_file (str): 临时 JSON 文件路径（长内容时使用，由 write_temp_json 生成）。
+            如果提供了 json_file，则忽略 slides_json，从文件读取。
     """
+    if json_file:
+        fp = pathlib.Path(json_file)
+        if fp.exists():
+            slides_json = fp.read_text(encoding="utf-8")
+            # Clean up temp file
+            try:
+                fp.unlink()
+            except Exception:
+                pass
     return create_pptx(filename, "dark", slides_json)
 
 

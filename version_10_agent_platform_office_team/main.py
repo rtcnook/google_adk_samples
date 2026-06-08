@@ -52,6 +52,57 @@ async def _print_events(runner, user_id, session_id, msg):
     return "\n".join(all_content)
 
 
+def _parse_multi_format_request(user_input: str) -> list:
+    """解析用户的多格式请求，返回 [(格式名, 单独的prompt), ...]"""
+    import re
+    
+    # 常见的格式关键词
+    format_keywords = {
+        'PPT': [r'\bppt\b', r'幻灯片', r'演示文稿', r'powerpoint'],
+        'Word': [r'\bword\b', r'文档', r'doc', r'docx'],
+        'Excel': [r'\bexcel\b', r'表格', r'xlsx', r'电子表格'],
+        'MD': [r'\bmd\b', r'markdown', r'笔记'],
+    }
+    
+    # 检查是否包含多个格式关键词
+    found_formats = []
+    for fmt_name, patterns in format_keywords.items():
+        for pattern in patterns:
+            if re.search(pattern, user_input, re.IGNORECASE):
+                found_formats.append(fmt_name)
+                break
+    
+    # 如果只检测到 0 或 1 个格式，返回原始输入
+    if len(found_formats) <= 1:
+        return [("单格式", user_input)]
+    
+    # 提取主题关键词（去掉格式关键词后的部分）
+    topic = user_input
+    for patterns in format_keywords.values():
+        for pattern in patterns:
+            topic = re.sub(pattern, '', topic, flags=re.IGNORECASE)
+    # Remove common filler words in Chinese
+    topic = re.sub(r'[，,。、\s]+', ' ', topic).strip()
+    topic = re.sub(r'^(生成|写|创建|制作|做|帮我|请|帮我生成|需要|要)\s*', '', topic, flags=re.IGNORECASE)
+    topic = re.sub(r'\s*(的|和|与|以及|还有|也)\s*$', '', topic)
+    topic = re.sub(r'\s*(的|和|与|以及|还有|也)\s*', ' ', topic)
+    topic = topic.strip()
+    
+    # 为每个格式生成单独的 prompt
+    format_prompts = []
+    for fmt in found_formats:
+        if fmt == 'PPT':
+            format_prompts.append((f"{fmt}(幻灯片)", f"生成一份关于「{topic}」的 PPT 演示文稿，5-8 页，使用 write_temp_json 工具保存 JSON 内容"))
+        elif fmt == 'Word':
+            format_prompts.append((f"{fmt}(文档)", f"生成一份关于「{topic}」的 Word 文档，包含完整的结构化内容"))
+        elif fmt == 'Excel':
+            format_prompts.append((f"{fmt}(表格)", f"生成一份关于「{topic}」的 Excel 表格，包含数据对比或统计分析"))
+        elif fmt == 'MD':
+            format_prompts.append((f"{fmt}(笔记)", f"生成一份关于「{topic}」的 Markdown 笔记，使用清晰的标题和列表结构"))
+    
+    return format_prompts
+
+
 def _try_build_ppt_from_content(content: str, filename: str = "output.pptx") -> bool:
     """If the content contains a slides JSON, auto-build the PPT."""
     # Try to extract JSON from the content
@@ -143,6 +194,8 @@ async def chat_ceo():
     print("Welcome to Maestroffice Lite (CEO Mode)!")
     print("Type 'exit' to quit.\n")
 
+    output_dir = pathlib.Path(__file__).parent / "outputs"
+
     while True:
         try:
             user_input = input("You: ").strip()
@@ -156,48 +209,61 @@ async def chat_ceo():
         if not user_input:
             continue
 
-        # Run the CEO agent and capture the initial final content (before auto-advance)
-        initial_content = await _print_events(
-            runner, user_id, session_id,
-            types.Content(parts=[types.Part(text=user_input)], role="user"),
-        )
+        # 解析多格式请求
+        format_prompts = _parse_multi_format_request(user_input)
 
-        # Track output files before auto-advance
-        output_dir = pathlib.Path(__file__).parent / "outputs"
-        existing_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
+        if len(format_prompts) > 1:
+            print(f"\n📋 检测到多格式请求，将分 {len(format_prompts)} 轮执行：")
+            for i, (fmt, prompt) in enumerate(format_prompts, 1):
+                print(f"   {i}. {fmt}: {prompt[:80]}...")
+            print()
 
-        # Auto-advance steps (only break when NEW file created, not old files)
-        for step in range(5):
-            await asyncio.sleep(1)
+        for fmt, prompt in format_prompts:
+            if len(format_prompts) > 1:
+                print(f"\n{'='*60}")
+                print(f"🔄 正在生成 {fmt} 格式...")
+                print(f"{'='*60}\n")
 
-            # Check for newly created output files
-            current_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
-            newly_created = current_files - existing_files
-            if any(ext in f for f in newly_created for ext in ['.pptx', '.docx', '.xlsx', '.md']):
-                break
+            # Track output files before this round
+            existing_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
 
-            prompts = [
-                "请继续自动完成下一步（research → writer → qa → export），不要停。",
-                "继续下一步。", "请继续推进。", "还有未完成的步骤，继续。", "继续执行工作流。",
-            ]
-            await _print_events(
+            # Run the CEO agent
+            initial_content = await _print_events(
                 runner, user_id, session_id,
-                types.Content(
-                    parts=[types.Part(text=prompts[min(step, len(prompts) - 1)])],
-                    role="user",
-                ),
+                types.Content(parts=[types.Part(text=prompt)], role="user"),
             )
 
-        # Check what new files were created
-        current_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
-        new_files = current_files - existing_files
+            # Auto-advance steps (only break when NEW file created)
+            for step in range(5):
+                await asyncio.sleep(1)
 
-        # Fallback: if export_manager didn't create any file, try to auto-build PPT from LLM content
-        if not new_files:
-            try:
-                _try_build_ppt_from_content(initial_content)
-            except Exception as e:
-                print(f"[Fallback] PPT auto-build failed: {e}", file=sys.stderr)
+                current_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
+                newly_created = current_files - existing_files
+                if any(ext in f for f in newly_created for ext in ['.pptx', '.docx', '.xlsx', '.md']):
+                    break
+
+                advance_prompts = [
+                    "请继续自动完成下一步（research → writer → qa → export），不要停。",
+                    "继续下一步。", "请继续推进。", "还有未完成的步骤，继续。", "继续执行工作流。",
+                ]
+                await _print_events(
+                    runner, user_id, session_id,
+                    types.Content(
+                        parts=[types.Part(text=advance_prompts[min(step, len(advance_prompts) - 1)])],
+                        role="user",
+                    ),
+                )
+
+            # Check what new files were created
+            current_files = set(f.name for f in output_dir.iterdir()) if output_dir.exists() else set()
+            new_files = current_files - existing_files
+
+            # Fallback
+            if not new_files:
+                try:
+                    _try_build_ppt_from_content(initial_content)
+                except Exception as e:
+                    print(f"[Fallback] PPT auto-build failed: {e}", file=sys.stderr)
 
         # Display all output files
         for pattern in ["*.pptx", "*.docx", "*.xlsx", "*.md"]:
